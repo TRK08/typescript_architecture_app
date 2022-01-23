@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
 export interface IUserController {
-	login: (req: Request, res: Response, next: NextFunction) => void;
-	registr: (req: Request, res: Response, next: NextFunction) => void;
+	login: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+	registr: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }

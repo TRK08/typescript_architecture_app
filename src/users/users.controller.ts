@@ -8,7 +8,6 @@ import 'reflect-metadata';
 import { IUserController } from './users.controller.interface';
 import { UserLoginDto } from './dto/user-login.dto';
 import { UserRegistrDto } from './dto/user-registr.dto';
-import { User } from './user.entity';
 import { UserService } from './users.service';
 import { ValidateMiddleware } from '../common/validate.middleware';
 
@@ -26,13 +25,27 @@ export class UserController extends BaseController implements IUserController {
 				func: this.registr,
 				middlewares: [new ValidateMiddleware(UserRegistrDto)],
 			},
-			{ path: '/login', method: 'post', func: this.login },
+			{
+				path: '/login',
+				method: 'post',
+				func: this.login,
+				middlewares: [new ValidateMiddleware(UserLoginDto)],
+			},
 		]);
 	}
 
-	login(req: Request<{}, {}, UserLoginDto>, res: Response, next: NextFunction): void {
-		console.log(req.body);
-		next(new HTTPError(401, 'Ошибка авторизации', 'login'));
+	async login(
+		{ body }: Request<{}, {}, UserLoginDto>,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> {
+		const result = await this.userService.validateUser(body);
+
+		if (!result) {
+			return next(new HTTPError(401, 'Ошибка авторизации', 'login'));
+		}
+
+		this.ok(res, 'Пользователь с данным email найден');
 	}
 
 	async registr(
@@ -44,6 +57,6 @@ export class UserController extends BaseController implements IUserController {
 		if (!result) {
 			return next(new HTTPError(422, 'Такой пользователь уже существует'));
 		}
-		this.ok(res, { email: result.email });
+		this.ok(res, { email: result.email, id: result.id });
 	}
 }
